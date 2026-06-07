@@ -1,0 +1,28 @@
+---
+- hosts: localhost
+  become: yes
+
+  tasks:
+
+    - name: Install Prometheus
+      apt:
+        name: prometheus
+        state: present
+        update_cache: yes
+
+    - name: Enable Prometheus Service
+      systemd:
+        name: prometheus
+        enabled: yes
+
+    - name: Start Prometheus Service
+      systemd:
+        name: prometheus
+        state: started
+
+    - name: Verify Prometheus Service
+      command: systemctl is-active prometheus
+      register: prometheus_status
+
+    - debug:
+        msg: "Prometheus Status: {{ prometheus_status.stdout }}"

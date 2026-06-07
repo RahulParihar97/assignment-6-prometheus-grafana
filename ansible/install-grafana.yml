@@ -1,0 +1,50 @@
+---
+- hosts: localhost
+  become: yes
+
+  tasks:
+
+    - name: Install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - software-properties-common
+        state: present
+
+    - name: Add Grafana GPG Key
+      shell: |
+        curl -fsSL https://apt.grafana.com/gpg.key | gpg --dearmor -o /usr/share/keyrings/grafana.gpg
+      args:
+        creates: /usr/share/keyrings/grafana.gpg
+
+    - name: Add Grafana Repository
+      copy:
+        dest: /etc/apt/sources.list.d/grafana.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Grafana
+      apt:
+        name: grafana
+        state: present
+
+    - name: Enable Grafana
+      systemd:
+        name: grafana-server
+        enabled: yes
+
+    - name: Start Grafana
+      systemd:
+        name: grafana-server
+        state: started
+
+    - name: Verify Grafana Service
+      command: systemctl is-active grafana-server
+      register: grafana_status
+
+    - debug:
+        msg: "Grafana Status: {{ grafana_status.stdout }}"
